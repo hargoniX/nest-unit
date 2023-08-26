@@ -21,7 +21,7 @@ def tests : TestTree := [nest|
         assert [[true, true], [true, true]]
       test "negative list (expected to fail)" : UnitTest := do
         assert [[true, true], [true, false]]
-      test "positive array" : UnitTest := do 
+      test "positive array" : UnitTest := do
         assert #[#[true, true], #[true, true]]
       test "negative array (expected to fail)" : UnitTest := do
         assert #[#[true, true], #[true, false]]
@@ -63,4 +63,4 @@ def tests : TestTree := [nest|
             assert x.contains `Hello
 ]
 
-def main : IO Unit := Nest.Core.defaultMain tests
+def main : IO UInt32 := Nest.Core.defaultMain tests
