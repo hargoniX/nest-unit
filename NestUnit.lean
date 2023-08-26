@@ -73,6 +73,31 @@ instance [DecidableEq α] [Repr α] {x y : α} : Assertable (Proxy (x = y)) wher
     unless x = y do
       assertFailure s!"equality failed, left: '{repr x}', right: '{repr y}'"
 
+instance [DecidableEq α] [Repr α] {x y : α} : Assertable (Proxy (x ≠ y)) where
+  assertThis _ := do
+    unless x ≠ y do
+      assertFailure s!"inequality failed, left: '{repr x}', right: '{repr y}'"
+
+instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x < y)) where
+  assertThis _ := do
+    unless x < y do
+      assertFailure s!"less than failed, left: '{repr x}', right: '{repr y}'"
+
+instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x > y)) where
+  assertThis _ := do
+    unless x > y do
+      assertFailure s!"greater than failed, left: '{repr x}', right: '{repr y}'"
+
+instance [LE α] [DecidableRel (· ≤ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x ≤ y)) where
+  assertThis _ := do
+    unless x ≤ y do
+      assertFailure s!"less than or equal failed, left: '{repr x}', right: '{repr y}'"
+
+instance [LE α] [DecidableRel (· ≥ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x ≥ y)) where
+  assertThis _ := do
+    unless x ≥ y do
+      assertFailure s!"greater than or equal failed, left: '{repr x}', right: '{repr y}'"
+
 open Lean in
 scoped elab "assert " t:term : term => do
   let assertion ← Elab.Term.elabTerm t none
@@ -87,7 +112,6 @@ scoped elab "assert " t:term : term => do
     return ← Meta.mkAppM ``Nest.Unit.runAssertThis #[proxyAssertion, posExpr]
   else
     return ← Meta.mkAppM ``Nest.Unit.runAssertThis #[assertion, posExpr]
-     
 
 end Unit
 end Nest
