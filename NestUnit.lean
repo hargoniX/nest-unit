@@ -59,99 +59,75 @@ def assertFailure (str : String) : UnitM Unit := do
 /--
 Marks a type as a property that can be checked as an assertion
 -/
-class Assertable (α : Sort u) where
+class Assertable {α : Sort u} (x : α) where
   /--
   Checks the property that is passed to it and calls `assertFailure` if appropriate. 
   Note that `assert` is the intended API for this function
   -/
-  assertThis : α → UnitM Unit
+  assertThis : UnitM Unit
 
 export Assertable (assertThis)
 
-/--
-Used by the `assert` macro as entrypoints to `asserThis` to provide the
-source position in case of failure.
--/
-def runAssertThis [Assertable α] (assertion : α) (pos : (String × Lean.Position)) : UnitM Unit := do
-  try
-    assertThis assertion
-  catch e =>
-    throw <| { e with pos := some pos }
-
-instance : Assertable Bool where
-  assertThis b := do
+instance : Assertable (b : Bool) where
+  assertThis := do
     unless b do
       assertFailure "boolean was false"
 
-instance [Assertable t] : Assertable (List t) where
-  assertThis xs := xs.forM assertThis
+instance [forall (x : t), Assertable x] (xs : List t) : Assertable xs where
+  assertThis := xs.forM (assertThis ·)
 
-instance [Assertable t] : Assertable (Array t) where
-  assertThis xs := xs.forM assertThis
-
-structure Proxy (p : Sort u) where
-
-instance : CoeDep (Sort u) p (Proxy p) where
-  coe := Proxy.mk
+instance [forall (x : t), Assertable x] (xs : Array t) : Assertable xs where
+  assertThis := xs.forM (assertThis ·)
 
 -- TODO: PrintableProp style stuff like with SlimCheck
-instance (priority := low) {p : Prop} [Decidable p] : Assertable (Proxy p) where
-  assertThis _ := do
+instance (priority := low) {p : Prop} [Decidable p] : Assertable p where
+  assertThis := do
     unless decide p do
       assertFailure "property was not true"
 
-instance [DecidableEq α] [Repr α] {x y : α} : Assertable (Proxy (x = y)) where
-  assertThis _ := do
+instance [DecidableEq α] [Repr α] {x y : α} : Assertable (x = y) where
+  assertThis := do
     unless x = y do
       assertFailure s!"equality failed, left: '{repr x}', right: '{repr y}'"
 
-instance [DecidableEq α] [Repr α] {x y : α} : Assertable (Proxy (x ≠ y)) where
-  assertThis _ := do
+instance [DecidableEq α] [Repr α] {x y : α} : Assertable (x ≠ y) where
+  assertThis := do
     unless x ≠ y do
       assertFailure s!"inequality failed, left: '{repr x}', right: '{repr y}'"
 
-instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x < y)) where
-  assertThis _ := do
+instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (x < y) where
+  assertThis := do
     unless x < y do
       assertFailure s!"less than failed, left: '{repr x}', right: '{repr y}'"
 
-instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x > y)) where
-  assertThis _ := do
+instance [LT α] [DecidableRel (· < · : α → α → Prop)] [Repr α] {x y : α} : Assertable (x > y) where
+  assertThis := do
     unless x > y do
       assertFailure s!"greater than failed, left: '{repr x}', right: '{repr y}'"
 
-instance [LE α] [DecidableRel (· ≤ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x ≤ y)) where
-  assertThis _ := do
+instance [LE α] [DecidableRel (· ≤ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (x ≤ y) where
+  assertThis := do
     unless x ≤ y do
       assertFailure s!"less than or equal failed, left: '{repr x}', right: '{repr y}'"
 
-instance [LE α] [DecidableRel (· ≥ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (Proxy (x ≥ y)) where
-  assertThis _ := do
+instance [LE α] [DecidableRel (· ≥ · : α → α → Prop)] [Repr α] {x y : α} : Assertable (x ≥ y) where
+  assertThis := do
     unless x ≥ y do
       assertFailure s!"greater than or equal failed, left: '{repr x}', right: '{repr y}'"
 
 open Lean in
-/--
-The intended entrypoint to run assertions. The parameter here being the assertion.
-In order to allow for `t : Prop` it performs a case distinction on the type of `t`:
-- if `t : Prop` it will look for an instance `Assertable (Proxy t)`
-  and use that to check whether `t` holds
-- otherwise it will look for an instance `Assertable t` and use that
-  to check whether `t` holds
--/
-scoped elab "assert " t:term : term => do
-  let assertion ← Elab.Term.elabTerm t none
-  let assertionTyp ← Meta.inferType assertion
+scoped elab "pos%" : term => do
   let some pos := (← getRef).getPos?
     | throwError "no source info"
   let pos := (← getFileMap).toPosition pos
   let posExpr := toExpr (← getFileName, pos)
+  return posExpr
 
-  if assertionTyp.isProp then
-    let proxyAssertion ← Meta.mkAppOptM ``Nest.Unit.Proxy.mk #[assertion]
-    return ← Meta.mkAppM ``Nest.Unit.runAssertThis #[proxyAssertion, posExpr]
-  else
-    return ← Meta.mkAppM ``Nest.Unit.runAssertThis #[assertion, posExpr]
+def assert (t : α) [Assertable t] (pos : (String × Lean.Position) := by exact pos%) : UnitM Unit :=
+  try
+    assertThis t
+  catch e =>
+    throw <| { e with pos := some pos }
 
 end Unit
 end Nest

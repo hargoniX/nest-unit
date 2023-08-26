@@ -26,41 +26,41 @@ def tests : TestTree := [nest|
       test "negative array (expected to fail)" : UnitTest := do
         assert #[#[true, true], #[true, false]]
       test "positive eq" : UnitTest := do
-        assert "hello" = "hello"
+        assert <| "hello" = "hello"
       test "negative eq (expected to fail)" : UnitTest := do
-        assert "hello" = "world"
+        assert <| "hello" = "world"
       test "positive neq" : UnitTest := do
-        assert "hello" ≠ "world"
+        assert <| "hello" ≠ "world"
       test "negative neq (expected to fail)" : UnitTest := do
-        assert "hello" ≠ "hello"
+        assert <| "hello" ≠ "hello"
       test "positive lt" : UnitTest := do
-        assert (2 : Nat) < 10
+        assert <| 2 < 10
       test "negative lt (expected to fail)" : UnitTest := do
-        assert (10 : Nat) < 2
+        assert <| 10 < 2
       test "positive gt" : UnitTest := do
-        assert (10 : Nat) > 2
+        assert <| 10 > 2
       test "negative gt (expected to fail)" : UnitTest := do
-        assert (2 : Nat) > 10
+        assert <| 2 > 10
       test "positive le" : UnitTest := do
-        assert (2 : Nat) ≤ 2
-        assert (2 : Nat) ≤ 3
+        assert <| 2 ≤ 2
+        assert <| 2 ≤ 3
       test "negative le (expected to fail)" : UnitTest := do
-        assert (3 : Nat) ≤ 2
+        assert <| 3 ≤ 2
       test "positive ge" : UnitTest := do
-        assert (2 : Nat) ≥ 2
-        assert (3 : Nat) ≥ 2
+        assert <| 2 ≥ 2
+        assert <| 3 ≥ 2
       test "negative ge (expected to fail)" : UnitTest := do
-        assert (2 : Nat) ≥ 3
+        assert <| 2 ≥ 3
     group "Resource based"
       with resource fileRes "/dev/zero" .read as res
         test "assertion 3" : UnitTest := do
           let data ← res.read 12
-          assert data.size = 12
+          assert <| data.size = 12
     group "Option based"
       with options fun x => x.insert `Hello "foo"
         with options as x
           test "assertion 4" : UnitTest := do
-            assert x.contains `Hello
+            assert <| x.contains `Hello
 ]
 
 def main : IO UInt32 := Nest.Core.defaultMain tests
