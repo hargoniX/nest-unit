@@ -4,7 +4,7 @@
  [{"git":
    {"url": "https://github.com/hargonix/nest-core",
     "subDir?": null,
-    "rev": "5c2379112c1a26f726ceaf4a81a32501e693d953",
+    "rev": "c5831ae9c6e677528b2e45dfad5cc6a51ecb597f",
     "opts": {},
     "name": "«nest-core»",
     "inputRev?": "main",

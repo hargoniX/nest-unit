@@ -9,19 +9,19 @@ structure AssertionError where
   pos : Option (String × Lean.Position) := none
 deriving Repr
 
-abbrev UnitM (α : Type) := ReaderT Core.Options (ExceptT AssertionError IO) α
+abbrev UnitM (α : Type) := ExceptT AssertionError IO α
 abbrev UnitTest := UnitM Unit
 
 instance : Nest.Core.IsTest UnitTest where
-  run opts assertion := do
-    let result ← ReaderT.run assertion opts |>.run
+  run _ assertion := do
+    let result ← ExceptT.run assertion
     match result with
     | .ok .. =>
       return {
         outcome := .success,
         description := "all assertions succeeded",
         shortDescription := "all assertions succeeded",
-        details := pure ""
+        details := ""
       }
     | .error err =>
       let (filename, ⟨line, column⟩) := err.pos.get!
@@ -29,7 +29,7 @@ instance : Nest.Core.IsTest UnitTest where
         outcome := .failure .generic
         description := s!"assertion failure: {err.message}",
         shortDescription := s!"assertion failure: {err.message}",
-        details := pure s!"file: '{filename}', line: {line}, col: {column}"
+        details := s!"file: '{filename}', line: {line}, col: {column}"
       }
 
 def assertFailure (str : String) : UnitM Unit := do
