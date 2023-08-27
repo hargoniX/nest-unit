@@ -130,4 +130,14 @@ def assert (t : α) [Assertable t] (pos : (String × Lean.Position) := by exact 
     throw <| { e with pos := some pos }
 
 end Unit
+
+namespace Core
+namespace TestTree
+
+def unitTest (name : String) (t : Unit.UnitTest) : TestTree :=
+  TestTree.single name t
+
+end TestTree
+end Core
+
 end Nest
